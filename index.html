@@ -3,844 +3,363 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moss — Concepteur Développeur d'Applications · OSINT & Sécurité</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <title>Moss · OSINT & Sécurité</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg:       #05050e;
-      --surface:  #0a0a1a;
-      --border:   #161628;
-      --purple:   #7040c0;
-      --purple-l: #a878e8;
-      --purple-d: #3a1a70;
-      --gold:     #c8a84a;
-      --gold-l:   #e8c870;
-      --text:     #d8d0e8;
-      --muted:    #5a5070;
-      --mono:     'Share Tech Mono', monospace;
-      --serif:    'Crimson Pro', Georgia, serif;
-    }
-
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--serif);
-      font-size: 18px;
-      line-height: 1.7;
+      background: #05050e;
+      color: #c090f0;
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
       overflow-x: hidden;
     }
 
-    /* ── Grain overlay ── */
+    /* Grain */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
       pointer-events: none;
-      z-index: 9999;
-      opacity: 0.6;
+      z-index: 0;
     }
 
-    /* ── Ligne scan ── */
-    .scanline {
+    /* Scanline */
+    body::after {
+      content: '';
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(112,64,192,0.4), transparent);
-      animation: scan 8s linear infinite;
+      background: linear-gradient(90deg, transparent, rgba(144,80,208,0.3), transparent);
+      animation: scan 7s linear infinite;
       pointer-events: none;
-      z-index: 100;
+      z-index: 1;
     }
     @keyframes scan { from { top: 0 } to { top: 100vh } }
 
-    /* ── Navigation ── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      padding: 20px 48px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 50;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.3s, background 0.3s;
-    }
-    nav.scrolled {
-      background: rgba(5,5,14,0.92);
-      backdrop-filter: blur(12px);
-      border-color: var(--border);
-    }
-    .nav-logo {
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: 4px;
-      color: var(--purple-l);
-    }
-    .nav-links {
-      display: flex;
-      gap: 32px;
-      list-style: none;
-    }
-    .nav-links a {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--purple-l); }
-
-    /* ── Hero ── */
-    #hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 0 48px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Grille de fond */
-    #hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(112,64,192,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(112,64,192,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-    }
-
-    /* Glow central */
-    #hero::after {
-      content: '';
-      position: absolute;
-      left: 50%;
-      top: 40%;
-      transform: translate(-50%, -50%);
-      width: 600px;
-      height: 400px;
-      background: radial-gradient(ellipse, rgba(112,64,192,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero-inner {
+    .terminal {
       position: relative;
       z-index: 2;
-      max-width: 860px;
-    }
-
-    .hero-eyebrow {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 5px;
-      color: var(--purple-l);
-      margin-bottom: 24px;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.3s ease forwards;
-    }
-
-    .hero-name {
-      font-family: var(--serif);
-      font-size: clamp(52px, 8vw, 96px);
-      font-weight: 300;
-      letter-spacing: -1px;
-      color: #f0eaf8;
-      line-height: 1.05;
-      margin-bottom: 8px;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.5s ease forwards;
-    }
-
-    .hero-title {
-      font-family: var(--serif);
-      font-size: clamp(16px, 2.5vw, 22px);
-      font-weight: 300;
-      font-style: italic;
-      color: var(--gold);
-      margin-bottom: 36px;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.7s ease forwards;
-    }
-
-    .hero-desc {
-      font-size: clamp(15px, 1.8vw, 18px);
-      color: var(--muted);
-      max-width: 560px;
-      line-height: 1.8;
-      margin-bottom: 48px;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.9s ease forwards;
-    }
-
-    .hero-desc em { color: var(--text); font-style: normal; }
-
-    .hero-cta {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      opacity: 0;
-      animation: fadeUp 0.8s 1.1s ease forwards;
-    }
-
-    .btn-primary {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--bg);
-      background: var(--purple-l);
-      padding: 12px 28px;
-      text-decoration: none;
-      transition: background 0.2s, transform 0.2s;
-      border: none;
-      cursor: pointer;
-    }
-    .btn-primary:hover { background: #c0a0ff; transform: translateY(-1px); }
-
-    .btn-secondary {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      background: transparent;
-      border: 1px solid var(--border);
-      padding: 12px 28px;
-      text-decoration: none;
-      transition: border-color 0.2s, color 0.2s, transform 0.2s;
-    }
-    .btn-secondary:hover { border-color: var(--purple); color: var(--purple-l); transform: translateY(-1px); }
-
-    /* Scroll indicator */
-    .scroll-hint {
-      position: absolute;
-      bottom: 40px;
-      left: 48px;
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      opacity: 0;
-      animation: fadeUp 0.8s 1.4s ease forwards;
-    }
-    .scroll-hint::before {
-      content: '';
-      width: 1px;
-      height: 40px;
-      background: linear-gradient(to bottom, var(--purple), transparent);
-      animation: scrollLine 2s ease-in-out infinite;
-    }
-    @keyframes scrollLine { 0%,100%{opacity:0.3} 50%{opacity:1} }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Sections communes ── */
-    section {
-      padding: 120px 48px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .section-label {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 5px;
-      color: var(--purple);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .section-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-      max-width: 80px;
-    }
-
-    .section-title {
-      font-family: var(--serif);
-      font-size: clamp(28px, 4vw, 44px);
-      font-weight: 300;
-      color: #f0eaf8;
-      margin-bottom: 48px;
-      line-height: 1.2;
-    }
-
-    /* ── Projets ── */
-    #projets { padding-top: 60px; }
-
-    .project-card {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      margin-bottom: 2px;
-      position: relative;
-      overflow: hidden;
-      transition: border-color 0.3s;
-    }
-    .project-card:hover { border-color: var(--purple-d); }
-
-    .project-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 2px;
-      background: transparent;
-      transition: background 0.3s;
-    }
-    .project-card:hover::before { background: var(--purple-l); }
-
-    .project-inner {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-    }
-
-    .project-content {
-      padding: 48px;
-      border-right: 1px solid var(--border);
-    }
-
-    .project-number {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 3px;
-      color: var(--purple);
-      margin-bottom: 20px;
-    }
-
-    .project-name {
-      font-family: var(--serif);
-      font-size: 32px;
-      font-weight: 300;
-      color: #f0eaf8;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-
-    .project-subtitle {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 2px;
-      color: var(--gold);
-      margin-bottom: 24px;
-    }
-
-    .project-desc {
-      font-size: 16px;
-      color: var(--muted);
-      line-height: 1.8;
-      margin-bottom: 28px;
-    }
-    .project-desc em { color: var(--text); font-style: normal; }
-
-    .project-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 32px;
-    }
-    .tag {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 1px;
-      padding: 3px 10px;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      border-radius: 1px;
-    }
-
-    .project-links {
-      display: flex;
-      gap: 16px;
-    }
-    .project-link {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 2px;
-      color: var(--purple-l);
-      text-decoration: none;
-      border-bottom: 1px solid var(--purple-d);
-      padding-bottom: 2px;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .project-link:hover { color: #c0a0ff; border-color: #c0a0ff; }
-
-    .project-visual {
-      padding: 48px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: rgba(112,64,192,0.02);
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Visualisation CASSANDRE */
-    .cassandre-viz {
-      position: relative;
       width: 100%;
-      max-width: 320px;
+      max-width: 720px;
     }
 
-    .viz-screen {
-      background: #03030a;
-      border: 1px solid #1a1040;
-      padding: 16px;
-      font-family: var(--mono);
-      font-size: 10px;
-      line-height: 1.8;
-    }
-    .viz-line { display: flex; gap: 8px; }
-    .viz-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
-    .dot-red { background: #ff2040; box-shadow: 0 0 6px #ff2040; }
-    .dot-orange { background: #ff6020; box-shadow: 0 0 6px #ff6020; }
-    .dot-yellow { background: #ffaa00; box-shadow: 0 0 4px #ffaa00; }
-    .dot-blue { background: #4488ff; }
-    .viz-zone { color: #a878e8; }
-    .viz-score { color: #ff6020; }
-    .viz-theme { color: #5a5070; }
-    .viz-header {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 3px;
-      color: #3a2a5a;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #0f0f1e;
-    }
-    .viz-stat {
-      display: flex;
-      justify-content: space-between;
-      font-family: var(--mono);
-      font-size: 9px;
-      color: #3a2a5a;
-      margin-top: 12px;
-      padding-top: 8px;
-      border-top: 1px solid #0f0f1e;
-    }
-    .viz-stat b { color: #7040c0; }
-
-    /* Visualisation VoxReport */
-    .vox-viz {
-      width: 100%;
-      max-width: 320px;
-    }
-    .vox-screen {
-      background: #03030a;
-      border: 1px solid #1a1040;
-      overflow: hidden;
-    }
-    .vox-header-bar {
+    /* Header barre terminal */
+    .term-header {
+      background: #0d0d20;
+      border: 1px solid #1e1535;
+      border-bottom: none;
       padding: 10px 16px;
-      border-bottom: 1px solid #0f0f1e;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .vox-logo { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; color: #7040c0; }
-    .vox-badge { font-size: 8px; letter-spacing: 1px; padding: 2px 6px; background: rgba(112,64,192,0.12); color: #a878e8; border: 1px solid rgba(112,64,192,0.2); margin-left: auto; font-family: var(--mono); }
-    .vox-body { padding: 16px; }
-    .vox-field { margin-bottom: 10px; }
-    .vox-label { font-family: var(--mono); font-size: 8px; letter-spacing: 2px; color: #3a2a5a; margin-bottom: 4px; }
-    .vox-input { background: #080812; border: 1px solid #161628; padding: 6px 10px; font-family: var(--mono); font-size: 10px; color: #7a6a9a; width: 100%; }
-    .vox-mic {
-      display: flex; align-items: center; gap: 10px;
-      background: rgba(112,64,192,0.06); border: 1px solid rgba(112,64,192,0.15);
-      padding: 10px 14px; margin-bottom: 10px;
-    }
-    .mic-icon { font-size: 16px; animation: micPulse 1.5s ease-in-out infinite; }
-    @keyframes micPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
-    .mic-text { font-family: var(--mono); font-size: 9px; color: #7040c0; letter-spacing: 1px; }
-    .vox-status {
-      display: flex; gap: 6px;
-    }
-    .status-chip { font-family: var(--mono); font-size: 8px; letter-spacing: 1px; padding: 3px 8px; border: 1px solid; border-radius: 1px; }
-    .chip-new { border-color: rgba(74,154,255,0.4); color: #4a9aff; }
-    .chip-ok  { border-color: rgba(64,192,128,0.4); color: #40c080; }
-
-    /* ── À propos ── */
-    #apropos {
-      padding: 80px 48px 120px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .apropos-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: start;
-    }
-
-    .apropos-text p {
-      font-size: 17px;
-      color: var(--muted);
-      line-height: 1.9;
-      margin-bottom: 20px;
-    }
-    .apropos-text p em { color: var(--text); font-style: normal; }
-
-    .apropos-skills { }
-    .skill-group { margin-bottom: 32px; }
-    .skill-group-label {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 3px;
-      color: var(--purple);
-      margin-bottom: 12px;
-    }
-    .skill-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .skill-item {
-      font-family: var(--mono);
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #ff3b30; }
+    .dot-y { background: #ffcc00; }
+    .dot-g { background: #28cd41; }
+    .term-title {
+      margin-left: auto;
       font-size: 10px;
-      letter-spacing: 1px;
-      padding: 4px 12px;
-      background: rgba(112,64,192,0.06);
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-
-    /* ── Contact ── */
-    #contact {
-      padding: 80px 48px 120px;
-      max-width: 1100px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .contact-title {
-      font-family: var(--serif);
-      font-size: clamp(32px, 5vw, 56px);
-      font-weight: 300;
-      color: #f0eaf8;
-      margin-bottom: 16px;
-    }
-    .contact-sub {
-      font-size: 16px;
-      color: var(--muted);
-      margin-bottom: 40px;
-      font-style: italic;
-    }
-    .contact-link {
-      font-family: var(--mono);
-      font-size: 12px;
       letter-spacing: 3px;
-      color: var(--purple-l);
-      text-decoration: none;
-      border: 1px solid var(--purple-d);
-      padding: 14px 32px;
-      display: inline-block;
-      transition: all 0.2s;
+      color: #3a2a5a;
     }
-    .contact-link:hover { background: rgba(112,64,192,0.1); border-color: var(--purple-l); transform: translateY(-2px); }
 
-    /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 24px 48px;
+    /* Corps terminal */
+    .term-body {
+      background: #03030a;
+      border: 1px solid #1e1535;
+      padding: 28px 32px 40px;
+      min-height: 420px;
+      position: relative;
+    }
+
+    .line {
+      margin-bottom: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .prompt { color: #5a2a90; }
+    .cmd    { color: #e0d0f8; }
+    .output { color: #7050a0; }
+    .val    { color: #c090f0; }
+    .hi     { color: #f0e0ff; font-weight: bold; }
+    .gold   { color: #c8a84a; }
+    .green  { color: #40d080; }
+    .red    { color: #ff4060; }
+    .dim    { color: #2a1a4a; }
+    .sep    { color: #1e1535; }
+
+    /* Curseur */
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 15px;
+      background: #9050d0;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* Invisible pour le typage */
+    .hidden { visibility: hidden; }
+
+    /* Coins décoratifs */
+    .corner {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-color: #2a1a4a; border-style: solid;
+    }
+    .c-tl { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
+    .c-tr { top: 8px; right: 8px; border-width: 1px 1px 0 0; }
+    .c-bl { bottom: 8px; left: 8px; border-width: 0 0 1px 1px; }
+    .c-br { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+
+    /* Footer */
+    .term-footer {
+      border: 1px solid #1e1535;
+      border-top: none;
+      background: #0d0d20;
+      padding: 8px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-family: var(--mono);
+    }
+    .footer-status {
       font-size: 9px;
       letter-spacing: 2px;
-      color: var(--muted);
+      color: #3a2a5a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .footer-dot { color: var(--purple); margin: 0 8px; }
-
-    /* ── Responsive ── */
-    @media (max-width: 768px) {
-      nav { padding: 16px 24px; }
-      #hero, section, #apropos, #contact { padding-left: 24px; padding-right: 24px; }
-      .project-inner { grid-template-columns: 1fr; }
-      .project-content { border-right: none; border-bottom: 1px solid var(--border); }
-      .project-visual { display: none; }
-      .apropos-grid { grid-template-columns: 1fr; gap: 48px; }
-      footer { flex-direction: column; gap: 8px; text-align: center; }
+    .status-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #40d080;
+      animation: blink 2s ease-in-out infinite;
     }
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+    .footer-links a {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: #5a3a8a;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: #c090f0; }
   </style>
 </head>
 <body>
 
-  <div class="scanline"></div>
+<div class="terminal">
 
-  <!-- Navigation -->
-  <nav id="nav">
-    <div class="nav-logo">MOSS</div>
-    <ul class="nav-links">
-      <li><a href="#projets">PROJETS</a></li>
-      <li><a href="#apropos">PROFIL</a></li>
-      <li><a href="#contact">CONTACT</a></li>
-    </ul>
-  </nav>
+  <div class="term-header">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <div class="term-title">CASSANDRE TERMINAL · SESSION ACTIVE</div>
+  </div>
 
-  <!-- Hero -->
-  <section id="hero">
-    <div class="hero-inner">
-      <div class="hero-eyebrow">CONCEPTEUR DÉVELOPPEUR D'APPLICATIONS · RNCP NIVEAU 6</div>
-      <h1 class="hero-name">Moss</h1>
-      <div class="hero-title">OSINT & Sécurité</div>
-      <p class="hero-desc">
-        Je construis des <em>outils opérationnels</em> pour les environnements
-        où la donnée brute doit devenir du renseignement actionnable —
-        <em>souverains, auditables, déployables hors-ligne.</em>
-      </p>
-      <div class="hero-cta">
-        <a href="#projets" class="btn-primary">VOIR LES PROJETS</a>
-        <a href="https://github.com/MossCDA" target="_blank" class="btn-secondary">GITHUB →</a>
-      </div>
+  <div class="term-body">
+    <div class="corner c-tl"></div>
+    <div class="corner c-tr"></div>
+    <div class="corner c-bl"></div>
+    <div class="corner c-br"></div>
+
+    <div id="output"></div>
+    <div id="cursor-line"><span class="cursor"></span></div>
+  </div>
+
+  <div class="term-footer">
+    <div class="footer-status">
+      <div class="status-dot"></div>
+      MISTRAL 7B · LOCAL · SOUVERAIN
     </div>
-    <div class="scroll-hint">DÉFILER</div>
-  </section>
-
-  <!-- Projets -->
-  <section id="projets">
-    <div class="section-label">01 · PROJETS</div>
-    <h2 class="section-title">Deux outils,<br>une même logique opérationnelle.</h2>
-
-    <!-- CASSANDRE -->
-    <div class="project-card">
-      <div class="project-inner">
-        <div class="project-content">
-          <div class="project-number">PROJET 01</div>
-          <div class="project-name">CASSANDRE</div>
-          <div class="project-subtitle">OPEN SOURCE SIGNAL INTELLIGENCE</div>
-          <p class="project-desc">
-            Système de détection de <em>signaux faibles</em> sur sources ouvertes.
-            Collecte automatisée de plus de 40 sources (presse nationale, régionale, forums, réseaux sociaux),
-            classification par <em>Mistral 7B en local</em>, cartographie Leaflet des tensions mondiales
-            et algorithmes de détection de corrélations inter-thèmes.
-            <br><br>
-            Origine : détection manuelle du signal COVID-19 sur un forum de jeux vidéo
-            en <em>janvier 2020</em>, plusieurs semaines avant les alertes officielles.
-            CASSANDRE automatise cette méthode.
-          </p>
-          <div class="project-tags">
-            <span class="tag">Node.js</span>
-            <span class="tag">Mistral 7B</span>
-            <span class="tag">Ollama</span>
-            <span class="tag">SQLite</span>
-            <span class="tag">Leaflet.js</span>
-            <span class="tag">Puppeteer</span>
-            <span class="tag">OSINT</span>
-            <span class="tag">Air Gap</span>
-          </div>
-          <div class="project-links">
-            <a href="https://github.com/MossCDA/Cassandre" target="_blank" class="project-link">GitHub →</a>
-          </div>
-        </div>
-        <div class="project-visual">
-          <div class="cassandre-viz">
-            <div class="viz-screen">
-              <div class="viz-header">CASSANDRE · SIGNAUX ACTIFS</div>
-              <div class="viz-line">
-                <div class="viz-dot dot-red"></div>
-                <div>
-                  <span class="viz-zone">Moyen-Orient</span>
-                  <span class="viz-score"> · 9/10</span>
-                  <br><span class="viz-theme">militaire · diplomatique</span>
-                </div>
-              </div>
-              <div class="viz-line" style="margin-top:8px;">
-                <div class="viz-dot dot-orange"></div>
-                <div>
-                  <span class="viz-zone">Ukraine</span>
-                  <span class="viz-score"> · 8/10</span>
-                  <br><span class="viz-theme">militaire · économique</span>
-                </div>
-              </div>
-              <div class="viz-line" style="margin-top:8px;">
-                <div class="viz-dot dot-yellow"></div>
-                <div>
-                  <span class="viz-zone">France</span>
-                  <span class="viz-score"> · 7/10</span>
-                  <br><span class="viz-theme">politique · social</span>
-                </div>
-              </div>
-              <div class="viz-line" style="margin-top:8px;">
-                <div class="viz-dot dot-blue"></div>
-                <div>
-                  <span class="viz-zone">Asie-Pacifique</span>
-                  <span class="viz-score"> · 5/10</span>
-                  <br><span class="viz-theme">économique</span>
-                </div>
-              </div>
-              <div class="viz-stat">
-                <span>Signaux collectés</span><b>4 661</b>
-                <span>Sources</span><b>40+</b>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="footer-links">
+      <a href="https://github.com/MossCDA/Cassandre" target="_blank">CASSANDRE</a>
+      <a href="https://github.com/MossCDA/VoxReport" target="_blank">VOXREPORT</a>
+      <a href="https://github.com/MossCDA" target="_blank">GITHUB</a>
     </div>
+  </div>
 
-    <!-- VoxReport -->
-    <div class="project-card">
-      <div class="project-inner">
-        <div class="project-content">
-          <div class="project-number">PROJET 02</div>
-          <div class="project-name">VOXREPORT</div>
-          <div class="project-subtitle">RAPPORT VOCAL NUMÉRIQUE</div>
-          <p class="project-desc">
-            Application web MVC PHP de création de rapports par <em>dictée vocale</em>.
-            Transcription via Web Speech API, signature électronique sur canvas,
-            génération PDF horodatée et <em>workflow de validation</em> multi-rôles
-            (citoyen / agent / administrateur).
-            <br><br>
-            Cible opérationnelle : <em>police municipale, sécurité privée,
-            inspection du travail</em> — tout contexte nécessitant un rapport
-            rapide sans clavier.
-          </p>
-          <div class="project-tags">
-            <span class="tag">PHP MVC</span>
-            <span class="tag">MySQL</span>
-            <span class="tag">Web Speech API</span>
-            <span class="tag">FPDF</span>
-            <span class="tag">Canvas</span>
-            <span class="tag">PDO</span>
-          </div>
-          <div class="project-links">
-            <a href="https://github.com/MossCDA/VoxReport" target="_blank" class="project-link">GitHub →</a>
-          </div>
-        </div>
-        <div class="project-visual">
-          <div class="vox-viz">
-            <div class="vox-screen">
-              <div class="vox-header-bar">
-                <div class="vox-logo">VOXREPORT</div>
-                <div class="vox-badge">AGENT</div>
-              </div>
-              <div class="vox-body">
-                <div class="vox-field">
-                  <div class="vox-label">OBJET DU SIGNALEMENT</div>
-                  <div class="vox-input">Incident voie publique...</div>
-                </div>
-                <div class="vox-mic">
-                  <div class="mic-icon">🎙</div>
-                  <div class="mic-text">DICTÉE EN COURS · 00:42</div>
-                </div>
-                <div class="vox-field">
-                  <div class="vox-label">STATUT</div>
-                  <div class="vox-status">
-                    <div class="status-chip chip-new">NOUVEAU</div>
-                    <div class="status-chip chip-ok">SIGNÉ</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+</div>
 
-  </section>
+<script>
+const out = document.getElementById('output');
+const cursorLine = document.getElementById('cursor-line');
 
-  <!-- À propos -->
-  <section id="apropos">
-    <div class="section-label">02 · PROFIL</div>
-    <h2 class="section-title">Reconversion,<br>pas débutant.</h2>
-    <div class="apropos-grid">
-      <div class="apropos-text">
-        <p>
-          Parcours atypique : <em>militaire (13e RDP), télécoms, logistique, usinage.</em>
-          Reconversion en développement d'applications — RNCP niveau 6 en cours —
-          avec une orientation délibérée vers les outils à usage opérationnel et institutionnel.
-        </p>
-        <p>
-          L'intérêt pour l'OSINT et la détection de signaux faibles
-          <em>précède largement le CDA</em> : détection manuelle du signal COVID-19
-          sur sources ouvertes en janvier 2020, plusieurs semaines avant les alertes officielles.
-          CASSANDRE est l'automatisation de cette méthode.
-        </p>
-        <p>
-          Approche : <em>souveraineté par défaut</em> — IA locale, données locales,
-          déploiement hors-ligne possible. Les outils que je construis
-          sont conçus pour des environnements où la confidentialité n'est pas optionnelle.
-        </p>
-      </div>
-      <div class="apropos-skills">
-        <div class="skill-group">
-          <div class="skill-group-label">BACKEND</div>
-          <div class="skill-list">
-            <span class="skill-item">Node.js</span>
-            <span class="skill-item">PHP</span>
-            <span class="skill-item">SQLite</span>
-            <span class="skill-item">MySQL</span>
-            <span class="skill-item">REST API</span>
-          </div>
-        </div>
-        <div class="skill-group">
-          <div class="skill-group-label">FRONTEND</div>
-          <div class="skill-list">
-            <span class="skill-item">HTML/CSS/JS</span>
-            <span class="skill-item">Leaflet.js</span>
-            <span class="skill-item">Chart.js</span>
-            <span class="skill-item">Web Speech API</span>
-          </div>
-        </div>
-        <div class="skill-group">
-          <div class="skill-group-label">IA & DONNÉES</div>
-          <div class="skill-list">
-            <span class="skill-item">Mistral 7B</span>
-            <span class="skill-item">Ollama</span>
-            <span class="skill-item">OSINT</span>
-            <span class="skill-item">RSS/scraping</span>
-          </div>
-        </div>
-        <div class="skill-group">
-          <div class="skill-group-label">OUTILS</div>
-          <div class="skill-list">
-            <span class="skill-item">Git</span>
-            <span class="skill-item">Docker</span>
-            <span class="skill-item">Puppeteer</span>
-            <span class="skill-item">Linux</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+// ── Séquence du terminal ─────────────────────────────────────────────────────
+const SEQUENCE = [
+  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'IDENTIFY OPERATOR', delay: 600 },
+  { type: 'output', lines: [
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+    { cls: 'output', text: '  NOM           ' },{ cls: 'hi', text: 'El mohcine Schamel  ·  "Moss"' },
+    { cls: 'output', text: '  FORMATION     ' },{ cls: 'val', text: 'CDA · RNCP Niveau 6' },
+    { cls: 'output', text: '  SPÉCIALITÉ    ' },{ cls: 'gold', text: 'OSINT & Sécurité · Outils opérationnels' },
+    { cls: 'output', text: '  BACKGROUND    ' },{ cls: 'val', text: '13e RDP · Télécoms · Logistique · Usinage' },
+    { cls: 'output', text: '  DISPONIBLE    ' },{ cls: 'green', text: 'Stage août 2026' },
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+  ], delay: 80 },
 
-  <!-- Contact -->
-  <section id="contact">
-    <div class="section-label" style="justify-content:center;">03 · CONTACT</div>
-    <div class="contact-title">Disponible pour un stage<br>à partir d'août 2026.</div>
-    <p class="contact-sub">Orientations prioritaires : défense, renseignement, sécurité publique.</p>
-    <a href="https://github.com/MossCDA" target="_blank" class="contact-link">GITHUB · MOSSCDA</a>
-  </section>
+  { type: 'blank', delay: 500 },
 
-  <!-- Footer -->
-  <footer>
-    <span>MOSS <span class="footer-dot">·</span> CONCEPTEUR DÉVELOPPEUR D'APPLICATIONS</span>
-    <span>RNCP NIVEAU 6 <span class="footer-dot">·</span> 2026</span>
-  </footer>
+  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'LIST PROJECTS', delay: 400 },
+  { type: 'output', lines: [
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+    { cls: 'gold',   text: '  [01] CASSANDRE' },
+    { cls: 'output', text: '       Open Source Signal Intelligence' },
+    { cls: 'val',    text: '       Node.js · Mistral 7B · SQLite · Leaflet' },
+    { cls: 'output', text: '       40+ sources · IA locale · Air Gap · 4 661 signaux' },
+    { cls: 'dim',    text: '' },
+    { cls: 'gold',   text: '  [02] VOXREPORT' },
+    { cls: 'output', text: '       Rapport vocal numérique' },
+    { cls: 'val',    text: '       PHP MVC · MySQL · Web Speech API · FPDF' },
+    { cls: 'output', text: '       Dictée vocale · Signature électronique · Multi-rôles' },
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+  ], delay: 60 },
 
-  <script>
-    // Nav scroll effect
-    const nav = document.getElementById('nav');
-    window.addEventListener('scroll', () => {
-      nav.classList.toggle('scrolled', window.scrollY > 60);
-    });
-  </script>
+  { type: 'blank', delay: 500 },
 
+  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'SHOW STACK', delay: 400 },
+  { type: 'output', lines: [
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+    { cls: 'output', text: '  BACKEND   ' },{ cls: 'val', text: 'Node.js  PHP  SQLite  MySQL  REST API' },
+    { cls: 'output', text: '  FRONTEND  ' },{ cls: 'val', text: 'HTML/CSS/JS  Leaflet.js  Chart.js' },
+    { cls: 'output', text: '  IA        ' },{ cls: 'val', text: 'Mistral 7B  Ollama  OSINT  NLP' },
+    { cls: 'output', text: '  OUTILS    ' },{ cls: 'val', text: 'Git  Docker  Puppeteer  Linux' },
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+  ], delay: 60 },
+
+  { type: 'blank', delay: 500 },
+
+  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'DETECT SIGNAL --zone=COVID-19 --date=2020-01', delay: 600 },
+  { type: 'output', lines: [
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+    { cls: 'red',    text: '  ⚠  SIGNAL DÉTECTÉ' },
+    { cls: 'output', text: '  Zone         ' },{ cls: 'val', text: 'Wuhan, Chine' },
+    { cls: 'output', text: '  Date         ' },{ cls: 'val', text: 'Janvier 2020' },
+    { cls: 'output', text: '  Source       ' },{ cls: 'val', text: 'Forum jeux vidéo (source ouverte)' },
+    { cls: 'output', text: '  Alerte off.  ' },{ cls: 'red', text: 'Inexistante à cette date' },
+    { cls: 'output', text: '  Verdict      ' },{ cls: 'green', text: 'CONFIRMÉ · Signal précoce COVID-19' },
+    { cls: 'dim',    text: '  → CASSANDRE automatise cette méthode.' },
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+  ], delay: 70 },
+
+  { type: 'blank', delay: 500 },
+
+  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'STATUS --targets', delay: 400 },
+  { type: 'output', lines: [
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+    { cls: 'output', text: '  Cibles prioritaires :' },
+    { cls: 'gold',   text: '  ·  Défense nationale' },
+    { cls: 'gold',   text: '  ·  Renseignement (PJGN · DGSI)' },
+    { cls: 'gold',   text: '  ·  Sécurité publique' },
+    { cls: 'dim',    text: '' },
+    { cls: 'green',  text: '  DISPONIBLE · Stage août 2026' },
+    { cls: 'dim',    text: '─────────────────────────────────────────' },
+  ], delay: 70 },
+
+  { type: 'blank', delay: 400 },
+  { type: 'idle' },
+];
+
+// ── Moteur de typage ─────────────────────────────────────────────────────────
+let seqIdx = 0;
+let totalDelay = 0;
+
+function addLine(html, extraClass = '') {
+  const div = document.createElement('div');
+  div.className = 'line ' + extraClass;
+  div.innerHTML = html;
+  out.appendChild(div);
+  cursorLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function typeText(element, text, speed, cb) {
+  let i = 0;
+  function tick() {
+    if (i <= text.length) {
+      element.innerHTML = text.slice(0, i);
+      i++;
+      setTimeout(tick, speed);
+    } else if (cb) cb();
+  }
+  tick();
+}
+
+function processSequence() {
+  if (seqIdx >= SEQUENCE.length) return;
+  const step = SEQUENCE[seqIdx++];
+
+  setTimeout(() => {
+    if (step.type === 'blank') {
+      addLine('');
+      processSequence();
+    }
+    else if (step.type === 'idle') {
+      // Curseur reste actif — rien à faire
+    }
+    else if (step.type === 'prompt') {
+      const div = document.createElement('div');
+      div.className = 'line';
+      const promptSpan = document.createElement('span');
+      promptSpan.className = 'prompt';
+      promptSpan.textContent = step.text;
+      const cmdSpan = document.createElement('span');
+      cmdSpan.className = 'cmd';
+      div.appendChild(promptSpan);
+      div.appendChild(cmdSpan);
+      out.appendChild(div);
+      cursorLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+      // Typage de la commande
+      typeText(cmdSpan, step.cmd, 45, () => {
+        setTimeout(processSequence, 300);
+      });
+    }
+    else if (step.type === 'output') {
+      let li = 0;
+      function nextLine() {
+        if (li >= step.lines.length) { processSequence(); return; }
+        const l = step.lines[li++];
+        // Ligne avec deux parties (label + valeur)
+        if (step.lines[li - 1] && typeof l.text === 'string') {
+          // Vérifier si la ligne suivante est une continuation (sans cls = fusion)
+          const next = step.lines[li];
+          if (next && !next.text.startsWith('  ') && li < step.lines.length) {
+            // ligne simple
+            addLine(`<span class="${l.cls}">${l.text}</span>`);
+          } else {
+            addLine(`<span class="${l.cls}">${l.text}</span>`);
+          }
+        }
+        setTimeout(nextLine, step.delay);
+      }
+      nextLine();
+    }
+  }, step.type === 'prompt' ? 600 : 200);
+}
+
+// Ligne de boot
+setTimeout(() => {
+  addLine('<span class="dim">CASSANDRE v2.0 · INITIALISATION...</span>');
+  addLine('<span class="dim">Ollama OK · Mistral 7B chargé · SQLite OK · Serveur :3000</span>');
+  addLine('');
+  setTimeout(processSequence, 800);
+}, 500);
+</script>
 </body>
 </html>
