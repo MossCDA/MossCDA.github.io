@@ -1,365 +1,818 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moss · OSINT & Sécurité</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOSS // CASSANDRE TERMINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g:#00ff41;--gd:rgba(0,255,65,0.6);--gf:rgba(0,255,65,0.08);
+  --a:#ffb000;--r:#ff2200;--c:#00cfff;
+  --bg:#010901;--mono:'IBM Plex Mono',monospace;--vt:'VT323',monospace;
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--g);font-family:var(--mono);overflow-x:hidden;cursor:none}
 
-    body {
-      background: #05050e;
-      color: #c090f0;
-      font-family: 'Share Tech Mono', monospace;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
-      overflow-x: hidden;
-    }
+/* CRT glass effect */
+#crt{position:fixed;inset:0;pointer-events:none;z-index:9500}
+#crt::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.18) 0,rgba(0,0,0,0.18) 1px,transparent 1px,transparent 4px);
+}
+#crt::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 70% at 50% 50%,transparent 55%,rgba(0,0,0,0.75) 100%);
+}
+/* phosphor bloom */
+#bloom{position:fixed;inset:0;pointer-events:none;z-index:9499;
+  background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(0,255,65,0.03) 0%,transparent 70%);
+}
 
-    /* Grain */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-    }
+/* flicker */
+@keyframes flk{0%,100%{opacity:1}91%{opacity:1}92%{opacity:.7}93%{opacity:1}95%{opacity:.85}96%{opacity:1}}
+#root{animation:flk 12s infinite}
 
-    /* Scanline */
-    body::after {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(144,80,208,0.3), transparent);
-      animation: scan 7s linear infinite;
-      pointer-events: none;
-      z-index: 1;
-    }
-    @keyframes scan { from { top: 0 } to { top: 100vh } }
+/* scanline sweep */
+.sl{position:fixed;left:0;right:0;height:2px;background:linear-gradient(180deg,transparent,rgba(0,255,65,0.06),transparent);animation:slm 8s linear infinite;pointer-events:none;z-index:9490}
+@keyframes slm{0%{top:-2px}100%{top:100vh}}
 
-    .terminal {
-      position: relative;
-      z-index: 2;
-      width: 100%;
-      max-width: 720px;
-    }
+/* cursor */
+#cur{position:fixed;width:12px;height:2px;background:var(--g);pointer-events:none;z-index:9999;box-shadow:0 0 8px var(--g);transition:width 0.15s}
+#cur.big{width:24px}
 
-    /* Header barre terminal */
-    .term-header {
-      background: #0d0d20;
-      border: 1px solid #1e1535;
-      border-bottom: none;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-r { background: #ff3b30; }
-    .dot-y { background: #ffcc00; }
-    .dot-g { background: #28cd41; }
-    .term-title {
-      margin-left: auto;
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: #3a2a5a;
-    }
+/* ── BOOT ── */
+#boot{position:fixed;inset:0;background:#000;z-index:8000;padding:48px 64px;font-size:12px;line-height:1.9;overflow:hidden}
+#boot.out{animation:bootOut 0.4s forwards}
+@keyframes bootOut{0%{opacity:1;filter:brightness(1)}50%{opacity:1;filter:brightness(2)}100%{opacity:0;filter:brightness(0)}}
+.bl{opacity:0;white-space:nowrap}
+.bl.s{opacity:1}
+.bok{color:var(--g)}.bwn{color:var(--a)}.ber{color:var(--r)}.bcy{color:var(--c)}
+#bcur{display:inline-block;width:9px;height:14px;background:var(--g);vertical-align:middle;animation:bc 0.6s step-end infinite}
+@keyframes bc{0%,100%{opacity:1}50%{opacity:0}}
 
-    /* Corps terminal */
-    .term-body {
-      background: #03030a;
-      border: 1px solid #1e1535;
-      padding: 28px 32px 40px;
-      min-height: 420px;
-      position: relative;
-    }
+/* ── MAIN LAYOUT ── */
+#root{display:none;min-height:100vh}
 
-    .line {
-      margin-bottom: 6px;
-      font-size: 14px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
+/* TOPBAR */
+#tb{position:fixed;top:0;left:0;right:0;height:36px;background:rgba(1,9,1,0.97);
+  border-bottom:1px solid rgba(0,255,65,0.12);display:flex;align-items:center;
+  justify-content:space-between;padding:0 32px;z-index:500;font-size:9px;letter-spacing:0.18em}
+.tb-l{display:flex;align-items:center;gap:10px;color:rgba(0,255,65,0.5)}
+.tb-dot{width:5px;height:5px;background:var(--g);border-radius:50%;box-shadow:0 0 8px var(--g);animation:pd 2s infinite}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.3}}
+.tb-r{color:rgba(0,255,65,0.25);font-size:8px}
 
-    .prompt { color: #5a2a90; }
-    .cmd    { color: #e0d0f8; }
-    .output { color: #7050a0; }
-    .val    { color: #c090f0; }
-    .hi     { color: #f0e0ff; font-weight: bold; }
-    .gold   { color: #c8a84a; }
-    .green  { color: #40d080; }
-    .red    { color: #ff4060; }
-    .dim    { color: #2a1a4a; }
-    .sep    { color: #1e1535; }
+/* HERO — asymmetric split */
+#hero{
+  min-height:100vh;padding-top:36px;
+  display:grid;grid-template-columns:1fr 420px;
+  position:relative;overflow:hidden;
+}
+#hero-left{padding:80px 48px 60px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+#hero-right{border-left:1px solid rgba(0,255,65,0.08);position:relative;display:flex;flex-direction:column}
 
-    /* Curseur */
-    .cursor {
-      display: inline-block;
-      width: 8px;
-      height: 15px;
-      background: #9050d0;
-      vertical-align: middle;
-      animation: blink 1s step-end infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+/* matrix canvas */
+#mc{position:absolute;inset:0;opacity:0.055;pointer-events:none}
 
-    /* Invisible pour le typage */
-    .hidden { visibility: hidden; }
+/* giant name */
+.h-pre{font-size:10px;letter-spacing:0.25em;color:rgba(0,255,65,0.3);margin-bottom:16px}
+.h-pre::before{content:'┌─ ';color:rgba(0,255,65,0.15)}
+.h-name{
+  font-family:var(--vt);font-size:clamp(100px,14vw,180px);
+  line-height:.82;letter-spacing:0.06em;
+  color:var(--g);
+  text-shadow:0 0 60px rgba(0,255,65,0.35),0 0 120px rgba(0,255,65,0.1);
+  position:relative;margin-bottom:8px;
+}
+.h-name::before,.h-name::after{content:attr(data-t);position:absolute;top:0;left:0;font-family:var(--vt);font-size:inherit;letter-spacing:inherit}
+.h-name::before{color:rgba(255,0,60,.45);animation:ga 5s infinite;clip-path:inset(0 0 65% 0)}
+.h-name::after{color:rgba(0,180,255,.35);animation:gb 5s infinite;clip-path:inset(55% 0 0 0)}
+@keyframes ga{0%,85%,100%{transform:translate(0)}86%{transform:translate(-4px,1px)}88%{transform:translate(3px,-1px)}90%{transform:translate(-2px,0)}}
+@keyframes gb{0%,85%,100%{transform:translate(0)}86%{transform:translate(4px,-1px)}88%{transform:translate(-3px,1px)}90%{transform:translate(1px,0)}}
 
-    /* Coins décoratifs */
-    .corner {
-      position: absolute;
-      width: 12px; height: 12px;
-      border-color: #2a1a4a; border-style: solid;
-    }
-    .c-tl { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
-    .c-tr { top: 8px; right: 8px; border-width: 1px 1px 0 0; }
-    .c-bl { bottom: 8px; left: 8px; border-width: 0 0 1px 1px; }
-    .c-br { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+.h-sub{font-size:11px;letter-spacing:0.28em;color:rgba(0,255,65,.4);margin-bottom:48px;padding-left:2px}
+.h-sub .tc::after{content:'▋';animation:bc 1s step-end infinite;color:var(--g)}
 
-    /* Footer */
-    .term-footer {
-      border: 1px solid #1e1535;
-      border-top: none;
-      background: #0d0d20;
-      padding: 8px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .footer-status {
-      font-size: 9px;
-      letter-spacing: 2px;
-      color: #3a2a5a;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .status-dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: #40d080;
-      animation: blink 2s ease-in-out infinite;
-    }
-    .footer-links {
-      display: flex;
-      gap: 20px;
-    }
-    .footer-links a {
-      font-size: 9px;
-      letter-spacing: 2px;
-      color: #5a3a8a;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .footer-links a:hover { color: #c090f0; }
-  </style>
+/* status rows */
+.st-rows{display:flex;flex-direction:column;gap:0;border:1px solid rgba(0,255,65,0.08);max-width:580px}
+.st-row{display:flex;border-bottom:1px solid rgba(0,255,65,0.05);font-size:10px}
+.st-row:last-child{border-bottom:none}
+.st-k{padding:10px 16px;color:rgba(0,255,65,.3);letter-spacing:0.12em;min-width:180px;border-right:1px solid rgba(0,255,65,0.05);font-size:9px;text-transform:uppercase}
+.st-v{padding:10px 16px;color:rgba(0,255,65,.8);letter-spacing:0.06em}
+.st-v.on{color:var(--g);text-shadow:0 0 8px rgba(0,255,65,.4)}
+.st-v.am{color:var(--a)}
+.st-v.cy{color:var(--c)}
+
+/* RADAR — right panel */
+#radar-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+#radar-canvas{display:block}
+.radar-label{position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:8px;letter-spacing:0.2em;color:rgba(0,255,65,.25);text-transform:uppercase}
+
+/* threat feed */
+#feed{border-top:1px solid rgba(0,255,65,0.08);padding:16px;max-height:180px;overflow:hidden}
+.feed-title{font-size:8px;letter-spacing:0.2em;color:rgba(0,255,65,.25);margin-bottom:10px;text-transform:uppercase}
+.feed-item{font-size:9px;color:rgba(0,255,65,.35);line-height:1.6;padding:2px 0;border-bottom:1px solid rgba(0,255,65,0.04)}
+.feed-item::before{content:'> ';color:rgba(0,255,65,.2)}
+.feed-hi{color:rgba(0,255,65,.6)}
+
+/* ── SECTIONS ── */
+.sec{padding:60px 48px;border-top:1px solid rgba(0,255,65,0.06);position:relative}
+.sec-hd{display:flex;align-items:center;gap:12px;font-size:9px;letter-spacing:0.3em;color:rgba(0,255,65,.25);text-transform:uppercase;margin-bottom:32px}
+.sec-hd::before{content:'//';color:rgba(0,255,65,.15)}
+.sec-hd::after{content:'';flex:1;height:1px;background:rgba(0,255,65,0.06)}
+
+/* PROJECT CARDS — asymmetric */
+.proj-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.proj-card{
+  border:1px solid rgba(0,255,65,0.08);background:rgba(0,255,65,0.015);
+  padding:28px 24px;text-decoration:none;display:block;position:relative;overflow:hidden;
+  transition:background .25s,border-color .25s;
+}
+.proj-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:rgba(0,255,65,.12);transition:background .25s,box-shadow .25s}
+.proj-card:hover{background:rgba(0,255,65,.035);border-color:rgba(0,255,65,.22)}
+.proj-card:hover::after{background:var(--g);box-shadow:0 0 16px var(--g)}
+.proj-card.full{grid-column:1/-1}
+.proj-card.dim{opacity:.32;pointer-events:none}
+.pc-ref{font-size:7px;letter-spacing:.2em;color:rgba(0,255,65,.25);margin-bottom:8px;text-transform:uppercase}
+.pc-name{font-family:var(--vt);font-size:48px;letter-spacing:.05em;color:rgba(0,255,65,.9);line-height:1;margin-bottom:4px;text-shadow:0 0 20px rgba(0,255,65,.25)}
+.pc-sub{font-size:8px;letter-spacing:.15em;color:rgba(0,255,65,.3);margin-bottom:14px;text-transform:uppercase}
+.pc-desc{font-size:10px;color:rgba(0,255,65,.35);line-height:1.75;margin-bottom:14px}
+.pc-tags{display:flex;flex-wrap:wrap;gap:4px}
+.ptag{font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,255,65,.3);border:1px solid rgba(0,255,65,.1);padding:2px 7px}
+.pc-badge{position:absolute;top:20px;right:20px;font-size:7px;letter-spacing:.15em;text-transform:uppercase;border:1px solid;padding:2px 8px}
+.pb-a{color:var(--g);border-color:var(--g);box-shadow:0 0 8px rgba(0,255,65,.2)}
+.pb-d{color:var(--a);border-color:var(--a)}
+.pb-c{color:var(--r);border-color:var(--r)}
+.redact{background:rgba(0,255,65,.12);color:transparent;user-select:none}
+
+/* INTEL */
+.intel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.ic{border:1px solid rgba(0,255,65,.07);background:rgba(0,255,65,.012);padding:24px 20px;position:relative;transition:background .25s}
+.ic:hover{background:rgba(0,255,65,.03)}
+.ic::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:rgba(0,255,65,.18)}
+.ic-cl{font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:var(--r);opacity:.65;margin-bottom:10px}
+.ic-ti{font-family:var(--vt);font-size:26px;letter-spacing:.04em;color:rgba(0,255,65,.7);margin-bottom:10px;line-height:1.1}
+.ic-bd{font-size:9px;color:rgba(0,255,65,.28);line-height:1.8;margin-bottom:14px}
+.ic-ft{display:flex;justify-content:space-between;font-size:8px;color:rgba(0,255,65,.18);border-top:1px solid rgba(0,255,65,.05);padding-top:10px}
+
+/* SKILLS */
+.sk-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.sk-gh{font-size:8px;letter-spacing:.22em;color:rgba(0,255,65,.25);text-transform:uppercase;margin-bottom:18px;padding-bottom:7px;border-bottom:1px solid rgba(0,255,65,.06)}
+.sk-row{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.sk-n{font-size:10px;color:rgba(0,255,65,.4);min-width:118px;letter-spacing:.03em}
+.sk-t{flex:1;height:1px;background:rgba(0,255,65,.07);position:relative}
+.sk-f{position:absolute;left:0;top:0;height:100%;background:var(--g);box-shadow:0 0 6px rgba(0,255,65,.5);transition:width 2s cubic-bezier(.4,0,.2,1);width:0}
+.sk-p{font-size:8px;color:rgba(0,255,65,.22);min-width:28px;text-align:right}
+.sp-tags{margin-top:18px;display:flex;flex-wrap:wrap;gap:5px}
+.sptag{font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,255,65,.28);border:1px solid rgba(0,255,65,.09);padding:3px 9px}
+
+/* CONTACT */
+.ct-block{border:1px solid rgba(0,255,65,.09);background:rgba(0,255,65,.015);padding:32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.ct-cmd{font-size:11px;color:rgba(0,255,65,.35);letter-spacing:.07em}
+.ct-cmd span{color:rgba(0,255,65,.7)}
+.ct-links{display:flex;gap:12px;flex-wrap:wrap}
+.ct-a{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(0,255,65,.35);text-decoration:none;border:1px solid rgba(0,255,65,.12);padding:7px 18px;transition:all .2s}
+.ct-a:hover{color:var(--g);border-color:var(--g);box-shadow:0 0 14px rgba(0,255,65,.2)}
+
+/* TICKER */
+#ticker{position:fixed;bottom:0;left:0;right:0;height:24px;background:rgba(1,9,1,.98);border-top:1px solid rgba(0,255,65,.09);display:flex;align-items:center;overflow:hidden;z-index:500}
+.ti{display:flex;animation:ts 55s linear infinite;white-space:nowrap}
+@keyframes ts{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tit{font-size:8px;letter-spacing:.15em;color:rgba(0,255,65,.16);padding:0 28px;text-transform:uppercase}
+.tit.h{color:rgba(0,255,65,.42)}
+
+/* fade-in */
+.fi{opacity:0;transform:translateY(10px);transition:opacity .7s,transform .7s}
+.fi.v{opacity:1;transform:translateY(0)}
+
+@media(max-width:900px){
+  #hero{grid-template-columns:1fr}
+  #hero-right{display:none}
+  .proj-grid,.intel-grid,.sk-grid{grid-template-columns:1fr}
+  .proj-card.full{grid-column:auto}
+  .sec,.hero-left{padding-left:24px;padding-right:24px}
+  #tb{padding:0 20px}
+}
+</style>
 </head>
 <body>
+<div id="crt"></div>
+<div id="bloom"></div>
+<div class="sl"></div>
+<div id="cur"></div>
 
-<div class="terminal">
+<!-- BOOT -->
+<div id="boot"><div id="bl"></div><span id="bcur"></span></div>
 
-  <div class="term-header">
-    <div class="dot dot-r"></div>
-    <div class="dot dot-y"></div>
-    <div class="dot dot-g"></div>
-    <div class="term-title">CASSANDRE TERMINAL · SESSION ACTIVE</div>
-  </div>
+<!-- ROOT -->
+<div id="root">
 
-  <div class="term-body">
-    <div class="corner c-tl"></div>
-    <div class="corner c-tr"></div>
-    <div class="corner c-bl"></div>
-    <div class="corner c-br"></div>
-
-    <div id="output"></div>
-    <div id="cursor-line"><span class="cursor"></span></div>
-  </div>
-
-  <div class="term-footer">
-    <div class="footer-status">
-      <div class="status-dot"></div>
-      MISTRAL 7B · LOCAL · SOUVERAIN
-    </div>
-    <div class="footer-links">
-      <a href="https://github.com/MossCDA/Cassandre" target="_blank">CASSANDRE</a>
-      <a href="https://github.com/MossCDA/VoxReport" target="_blank">VOXREPORT</a>
-      <a href="https://github.com/MossCDA" target="_blank">GITHUB</a>
-    </div>
-  </div>
-
+<!-- TOPBAR -->
+<div id="tb">
+  <div class="tb-l"><div class="tb-dot"></div><span id="clk"></span>&nbsp;·&nbsp;CASSANDRE NODE ACTIF</div>
+  <div style="color:rgba(0,255,65,.2);font-size:9px;letter-spacing:.15em">SIGINT PLATFORM v2.4 // LOT-ET-GARONNE // ENCRYPTED</div>
+  <div class="tb-r" id="tbd"></div>
 </div>
 
+<!-- HERO -->
+<div id="hero">
+  <canvas id="mc"></canvas>
+
+  <div id="hero-left">
+    <div class="h-pre">SESSION AUTHENTIFIÉE // ACCÈS NIVEAU 3</div>
+    <div class="h-name" data-t="MOSS">MOSS</div>
+    <div class="h-sub"><span class="tc" id="tc"></span></div>
+
+    <div class="st-rows">
+      <div class="st-row"><div class="st-k">Statut système</div><div class="st-v on">ONLINE // SESSION ACTIVE</div></div>
+      <div class="st-row"><div class="st-k">Formation</div><div class="st-v">CDA — RNCP NIVEAU 6</div></div>
+      <div class="st-row"><div class="st-k">Stage disponible</div><div class="st-v am">AOÛT 2026 // DISPONIBLE</div></div>
+      <div class="st-row"><div class="st-k">Nœud</div><div class="st-v">47 — LOT-ET-GARONNE</div></div>
+      <div class="st-row"><div class="st-k">Modèle IA local</div><div class="st-v cy">MISTRAL 7B // OLLAMA // CPU</div></div>
+      <div class="st-row"><div class="st-k">Parcours</div><div class="st-v">13e RDP · LOGISTIQUE · AGENCE</div></div>
+      <div class="st-row"><div class="st-k">Cibles institutionnelles</div><div class="st-v">PJGN · DGSI · IRSEM · FRS</div></div>
+    </div>
+  </div>
+
+  <div id="hero-right">
+    <div id="radar-wrap">
+      <canvas id="radar-canvas" width="340" height="300"></canvas>
+      <div class="radar-label">CASSANDRE // SURVEILLANCE ACTIVE</div>
+    </div>
+    <div id="feed">
+      <div class="feed-title">// Signal feed — temps réel</div>
+      <div id="feed-items"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECTS -->
+<div class="sec">
+  <div class="sec-hd">opérations</div>
+  <div class="proj-grid">
+
+    <a class="proj-card fi" href="https://github.com/MossCDA/Cassandre" target="_blank">
+      <div class="pc-badge pb-a">ACTIF</div>
+      <div class="pc-ref">OPÉ 01 // OSINT PLATFORM</div>
+      <div class="pc-name">CASSANDRE</div>
+      <div class="pc-sub">Détection signaux faibles · Air-gap · Souverain</div>
+      <div class="pc-desc">Plateforme OSINT multicanaux — collecteurs RSS/Reddit/Telegram FR, scoring de confiance source (PRIMARY→SOCIAL), corrélation inter-thèmes, 5 patterns de crise, module SENTINELLE 3 niveaux. Preuve de concept : signal COVID-19 identifié J-21 avant alerte officielle.</div>
+      <div class="pc-tags"><span class="ptag">Node.js</span><span class="ptag">SQLite</span><span class="ptag">Mistral 7B</span><span class="ptag">Leaflet</span><span class="ptag">Ollama</span><span class="ptag">Puppeteer</span><span class="ptag">OSINT</span></div>
+    </a>
+
+    <a class="proj-card fi" href="https://github.com/MossCDA/VoxReport" target="_blank">
+      <div class="pc-badge pb-d">DÉPLOYÉ</div>
+      <div class="pc-ref">OPÉ 02 // TERRAIN TOOL</div>
+      <div class="pc-name">VOXREPORT</div>
+      <div class="pc-sub">Transcription vocale · PDF signé · Forces de l'ordre</div>
+      <div class="pc-desc">Architecture PHP MVC 33 fichiers — Web Speech API, génération PDF TCPDF, signatures canvas, gestion des rôles. Intérêt confirmé de la Gendarmerie Nationale suite à transmission technique.</div>
+      <div class="pc-tags"><span class="ptag">PHP MVC</span><span class="ptag">Web Speech API</span><span class="ptag">TCPDF</span><span class="ptag">MySQL</span><span class="ptag">PDO</span></div>
+    </a>
+
+    <div class="proj-card full dim fi">
+      <div class="pc-badge pb-c">CLASSIFIÉ</div>
+      <div class="pc-ref">OPÉ 03 // ACCÈS RESTREINT</div>
+      <div class="pc-name"><span class="redact">PROJET DELTA</span></div>
+      <div class="pc-sub"><span class="redact">NIVEAU 4 — DIFFUSION RESTREINTE</span></div>
+      <div class="pc-desc"><span class="redact">████████████████████████████████████████████████████████████████████████████████████████████</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- INTEL -->
+<div class="sec fi">
+  <div class="sec-hd">analyses géopolitiques signées</div>
+  <div class="intel-grid">
+    <div class="ic fi">
+      <div class="ic-cl">Note de renseignement</div>
+      <div class="ic-ti">COVID-19 — Signal précoce</div>
+      <div class="ic-bd">Identification de signaux précurseurs sur un forum de jeu vidéo dès juin–juillet 2019, trois semaines avant les premières alertes officielles. Preuve de concept fondatrice de la méthodologie CASSANDRE.</div>
+      <div class="ic-ft"><span>2019 → 2026</span><span>Substack · Presse FR</span></div>
+    </div>
+    <div class="ic fi">
+      <div class="ic-cl">Analyse stratégique</div>
+      <div class="ic-ti">Nexus Israël–Iran–US</div>
+      <div class="ic-bd">Suivi en temps réel du conflit US-Israël-Iran (2026). Identification indépendante de l'absence de Netanyahu avant couverture mainstream. Analyse multi-couches, document signé.</div>
+      <div class="ic-ft"><span>Janv. 2026</span><span>Analyse signée</span></div>
+    </div>
+    <div class="ic fi">
+      <div class="ic-cl">Évaluation doctrinale</div>
+      <div class="ic-ti">LUCAS & Doctrine Samson</div>
+      <div class="ic-bd">Analyse de la doctrine Samson à l'ère des systèmes autonomes létaux. Impact des drones LUCAS sur les équilibres stratégiques régionaux et paradigmes de dissuasion nucléaire.</div>
+      <div class="ic-ft"><span>2026</span><span>Analyse signée</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SKILLS -->
+<div class="sec fi">
+  <div class="sec-hd">capacités</div>
+  <div class="sk-grid">
+    <div>
+      <div class="sk-gh">// Développement</div>
+      <div class="sk-row"><span class="sk-n">Node.js</span><div class="sk-t"><div class="sk-f" data-w="78"></div></div><span class="sk-p">78</span></div>
+      <div class="sk-row"><span class="sk-n">PHP / MVC</span><div class="sk-t"><div class="sk-f" data-w="72"></div></div><span class="sk-p">72</span></div>
+      <div class="sk-row"><span class="sk-n">JavaScript</span><div class="sk-t"><div class="sk-f" data-w="75"></div></div><span class="sk-p">75</span></div>
+      <div class="sk-row"><span class="sk-n">SQL / SQLite</span><div class="sk-t"><div class="sk-f" data-w="70"></div></div><span class="sk-p">70</span></div>
+      <div class="sk-row"><span class="sk-n">HTML / CSS</span><div class="sk-t"><div class="sk-f" data-w="80"></div></div><span class="sk-p">80</span></div>
+      <div class="sk-row"><span class="sk-n">Git</span><div class="sk-t"><div class="sk-f" data-w="65"></div></div><span class="sk-p">65</span></div>
+      <div class="sp-tags"><span class="sptag">REST API</span><span class="sptag">Docker</span><span class="sptag">Leaflet</span><span class="sptag">Three.js</span><span class="sptag">Ollama</span><span class="sptag">Puppeteer</span></div>
+    </div>
+    <div>
+      <div class="sk-gh">// Renseignement & Analyse</div>
+      <div class="sk-row"><span class="sk-n">OSINT</span><div class="sk-t"><div class="sk-f" data-w="88"></div></div><span class="sk-p">88</span></div>
+      <div class="sk-row"><span class="sk-n">Signaux faibles</span><div class="sk-t"><div class="sk-f" data-w="90"></div></div><span class="sk-p">90</span></div>
+      <div class="sk-row"><span class="sk-n">Géopolitique</span><div class="sk-t"><div class="sk-f" data-w="85"></div></div><span class="sk-p">85</span></div>
+      <div class="sk-row"><span class="sk-n">Synthèse</span><div class="sk-t"><div class="sk-f" data-w="87"></div></div><span class="sk-p">87</span></div>
+      <div class="sk-row"><span class="sk-n">Doctrine mil.</span><div class="sk-t"><div class="sk-f" data-w="80"></div></div><span class="sk-p">80</span></div>
+      <div class="sk-row"><span class="sk-n">Rédaction pub.</span><div class="sk-t"><div class="sk-f" data-w="82"></div></div><span class="sk-p">82</span></div>
+      <div class="sp-tags"><span class="sptag">13e RDP</span><span class="sptag">Substack</span><span class="sptag">Presse FR</span><span class="sptag">PJGN</span><span class="sptag">DGSI</span><span class="sptag">IRSEM</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div class="sec fi" style="padding-bottom:80px">
+  <div class="sec-hd">contact</div>
+  <div class="ct-block">
+    <div class="ct-cmd">root@cassandre:~$ <span>./connect --target recruteur --clearance 3 --encrypt</span></div>
+    <div class="ct-links">
+      <a class="ct-a" href="https://github.com/MossCDA" target="_blank">GitHub</a>
+      <a class="ct-a" href="https://mosscda.github.io" target="_blank">Portfolio</a>
+    </div>
+  </div>
+</div>
+
+
+
+</div><!-- /root -->
+
+<!-- FINALE OVERLAY — plein écran, déclenché au bas de la page -->
+<div id="finale" style="
+  position:fixed;inset:0;
+  background:#021a06;
+  z-index:4000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity 1.2s ease;
+  overflow:hidden;
+">
+  <!-- scanlines -->
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none"></div>
+  <!-- grid -->
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,255,65,0.03) 0,rgba(0,255,65,0.03) 1px,transparent 1px,transparent 36px),repeating-linear-gradient(90deg,rgba(0,255,65,0.03) 0,rgba(0,255,65,0.03) 1px,transparent 1px,transparent 36px);pointer-events:none"></div>
+
+  <!-- M _ S S lettres + O = radar -->
+  <div id="moss-logo" style="
+    display:flex;align-items:center;
+    gap:clamp(8px,2vw,24px);
+    position:relative;z-index:2;
+  ">
+    <!-- M -->
+    <div class="moss-letter" id="ml-m" style="opacity:0;transform:translateY(20px);transition:opacity 0.6s,transform 0.6s">
+      <span style="font-family:'VT323',monospace;font-size:clamp(100px,16vw,200px);line-height:1;color:#00ff41;text-shadow:0 0 40px rgba(0,255,65,0.4);letter-spacing:0">M</span>
+    </div>
+    <!-- O = radar canvas -->
+    <div class="moss-letter" id="ml-o" style="opacity:0;transform:translateY(20px);transition:opacity 0.6s 0.3s,transform 0.6s 0.3s;position:relative;display:flex;align-items:center;justify-content:center">
+      <canvas id="finale-radar" style="display:block;border-radius:50%;border:3px solid #00ff41;box-shadow:0 0 30px rgba(0,255,65,0.3)"></canvas>
+    </div>
+    <!-- S -->
+    <div class="moss-letter" id="ml-s1" style="opacity:0;transform:translateY(20px);transition:opacity 0.6s 0.6s,transform 0.6s 0.6s">
+      <span style="font-family:'VT323',monospace;font-size:clamp(100px,16vw,200px);line-height:1;color:#00ff41;text-shadow:0 0 40px rgba(0,255,65,0.4);letter-spacing:0">S</span>
+    </div>
+    <!-- S -->
+    <div class="moss-letter" id="ml-s2" style="opacity:0;transform:translateY(20px);transition:opacity 0.6s 0.9s,transform 0.6s 0.9s">
+      <span style="font-family:'VT323',monospace;font-size:clamp(100px,16vw,200px);line-height:1;color:#00ff41;text-shadow:0 0 40px rgba(0,255,65,0.4);letter-spacing:0">S</span>
+    </div>
+  </div>
+
+  <!-- tagline -->
+  <div id="finale-tag" style="
+    opacity:0;transition:opacity 1.5s 1.4s;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;letter-spacing:0.35em;text-transform:uppercase;
+    color:rgba(0,255,65,0.4);margin-top:28px;position:relative;z-index:2;text-align:center;
+  ">OSINT · Signaux faibles · Renseignement · Défense</div>
+
+  <div id="finale-sub" style="
+    opacity:0;transition:opacity 1.5s 1.9s;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:8px;letter-spacing:0.25em;text-transform:uppercase;
+    color:rgba(0,255,65,0.22);margin-top:8px;position:relative;z-index:2;text-align:center;
+  ">github.com/MossCDA · 2026</div>
+
+  <!-- close hint -->
+  <div onclick="closeFinale()" style="
+    position:absolute;bottom:32px;right:36px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;letter-spacing:0.2em;text-transform:uppercase;
+    color:rgba(0,255,65,0.2);cursor:pointer;
+    opacity:0;transition:opacity 1.5s 2.5s;
+  " id="finale-close">[ ESC ] FERMER ×</div>
+</div>
+
+<div id="ticker"><div class="ti" id="tic"></div></div>
+
 <script>
-const out = document.getElementById('output');
-const cursorLine = document.getElementById('cursor-line');
+/* ── AUDIO ENGINE ── */
+let AC=null;
+function initAudio(){
+  if(AC)return;
+  try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}
+}
+function beep(freq,dur,vol,type='square'){
+  if(!AC)return;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.connect(g);g.connect(AC.destination);
+  o.type=type;o.frequency.setValueAtTime(freq,AC.currentTime);
+  g.gain.setValueAtTime(vol,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
+  o.start();o.stop(AC.currentTime+dur);
+}
+function typeBeep(){beep(1200,0.04,0.04,'square')}
+function bootBeep(){beep(440,0.08,0.06,'square')}
+function okBeep(){beep(880,0.12,0.05,'sine')}
+function warnBeep(){beep(220,0.2,0.06,'sawtooth')}
+function radarPing(){beep(2000,0.3,0.03,'sine')}
+function staticBurst(){
+  if(!AC)return;
+  const buf=AC.createBuffer(1,AC.sampleRate*0.05,AC.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*0.03;
+  const s=AC.createBufferSource();s.buffer=buf;
+  s.connect(AC.destination);s.start();
+}
 
-// ── Séquence du terminal ─────────────────────────────────────────────────────
-const SEQUENCE = [
-  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'IDENTIFY OPERATOR', delay: 600 },
-  { type: 'output', lines: [
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-    { cls: 'output', text: '  NOM           ' },{ cls: 'hi', text: 'El mohcine Schamel  ·  "Moss"' },
-    { cls: 'output', text: '  FORMATION     ' },{ cls: 'val', text: 'CDA · RNCP Niveau 6' },
-    { cls: 'output', text: '  SPÉCIALITÉ    ' },{ cls: 'gold', text: 'OSINT & Sécurité · Outils opérationnels' },
-    { cls: 'output', text: '  BACKGROUND    ' },{ cls: 'val', text: '13e RDP · Télécoms · Logistique · Usinage' },
-    { cls: 'output', text: '  DISPONIBLE    ' },{ cls: 'green', text: 'Stage août 2026' },
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-  ], delay: 80 },
+/* ── CURSOR ── */
+const cur=document.getElementById('cur');
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+});
+document.addEventListener('mousedown',()=>cur.classList.add('big'));
+document.addEventListener('mouseup',()=>cur.classList.remove('big'));
+document.addEventListener('click',()=>initAudio());
 
-  { type: 'blank', delay: 500 },
+/* ── CLOCK ── */
+function tck(){
+  const n=new Date();
+  const c=document.getElementById('clk'),d=document.getElementById('tbd');
+  if(c)c.textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' UTC+1';
+  if(d)d.textContent=n.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+}
+tck();setInterval(tck,1000);
 
-  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'LIST PROJECTS', delay: 400 },
-  { type: 'output', lines: [
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-    { cls: 'gold',   text: '  [01] CASSANDRE' },
-    { cls: 'output', text: '       Open Source Signal Intelligence' },
-    { cls: 'val',    text: '       Node.js · Mistral 7B · SQLite · Leaflet' },
-    { cls: 'output', text: '       40+ sources · IA locale · Air Gap · 4 661 signaux' },
-    { cls: 'dim',    text: '' },
-    { cls: 'gold',   text: '  [02] VOXREPORT' },
-    { cls: 'output', text: '       Rapport vocal numérique' },
-    { cls: 'val',    text: '       PHP MVC · MySQL · Web Speech API · FPDF' },
-    { cls: 'output', text: '       Dictée vocale · Signature électronique · Multi-rôles' },
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-  ], delay: 60 },
-
-  { type: 'blank', delay: 500 },
-
-  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'SHOW STACK', delay: 400 },
-  { type: 'output', lines: [
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-    { cls: 'output', text: '  BACKEND   ' },{ cls: 'val', text: 'Node.js  PHP  SQLite  MySQL  REST API' },
-    { cls: 'output', text: '  FRONTEND  ' },{ cls: 'val', text: 'HTML/CSS/JS  Leaflet.js  Chart.js' },
-    { cls: 'output', text: '  IA        ' },{ cls: 'val', text: 'Mistral 7B  Ollama  OSINT  NLP' },
-    { cls: 'output', text: '  OUTILS    ' },{ cls: 'val', text: 'Git  Docker  Puppeteer  Linux' },
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-  ], delay: 60 },
-
-  { type: 'blank', delay: 500 },
-
-  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'DETECT SIGNAL --zone=COVID-19 --date=2020-01', delay: 600 },
-  { type: 'output', lines: [
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-    { cls: 'red',    text: '  ⚠  SIGNAL DÉTECTÉ' },
-    { cls: 'output', text: '  Zone         ' },{ cls: 'val', text: 'Wuhan, Chine' },
-    { cls: 'output', text: '  Date         ' },{ cls: 'val', text: 'Janvier 2020' },
-    { cls: 'output', text: '  Source       ' },{ cls: 'val', text: 'Forum jeux vidéo (source ouverte)' },
-    { cls: 'output', text: '  Alerte off.  ' },{ cls: 'red', text: 'Inexistante à cette date' },
-    { cls: 'output', text: '  Verdict      ' },{ cls: 'green', text: 'CONFIRMÉ · Signal précoce COVID-19' },
-    { cls: 'dim',    text: '  → CASSANDRE automatise cette méthode.' },
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-  ], delay: 70 },
-
-  { type: 'blank', delay: 500 },
-
-  { type: 'prompt', text: 'CASSANDRE > ', cmd: 'STATUS --targets', delay: 400 },
-  { type: 'output', lines: [
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-    { cls: 'output', text: '  Cibles prioritaires :' },
-    { cls: 'gold',   text: '  ·  Défense nationale' },
-    { cls: 'gold',   text: '  ·  Renseignement (PJGN · DGSI)' },
-    { cls: 'gold',   text: '  ·  Sécurité publique' },
-    { cls: 'dim',    text: '' },
-    { cls: 'green',  text: '  DISPONIBLE · Stage août 2026' },
-    { cls: 'dim',    text: '─────────────────────────────────────────' },
-  ], delay: 70 },
-
-  { type: 'blank', delay: 400 },
-  { type: 'idle' },
+/* ── BOOT ── */
+const BOOT=[
+  {t:'',d:0},
+  {t:'BIOS v2.4.1 // CASSANDRE SECURE BOOT',c:'bcy',d:0},
+  {t:'Copyright (C) 2026 MossCDA — Licence duale open/commercial',c:'',d:100},
+  {t:'',d:160},
+  {t:'Vérification intégrité système...',c:'',d:200},
+  {t:'[  OK  ] Kernel chargé — linux 6.1.0-cassandre',c:'bok',d:340},
+  {t:'[  OK  ] Interface réseau — chiffrement actif',c:'bok',d:470},
+  {t:'[  OK  ] Montage filesystem /dev/sda1 [ext4]',c:'bok',d:600},
+  {t:'[ WARN ] SSL rejectUnauthorized=false — mode souverain activé',c:'bwn',d:740},
+  {t:'[  OK  ] Ollama daemon — Mistral 7B chargé (CPU-only)',c:'bok',d:880},
+  {t:'[  OK  ] SQLite — journal.db + corpus.jsonl opérationnels',c:'bok',d:1010},
+  {t:'[  OK  ] Module SENTINELLE — 3 niveaux de sévérité',c:'bok',d:1140},
+  {t:'[  OK  ] Collecteurs actifs — RSS · Reddit FR · Telegram FR',c:'bok',d:1270},
+  {t:'[  OK  ] Source trust scoring — PRIMARY → SOCIAL (4 tiers)',c:'bok',d:1390},
+  {t:'[  OK  ] Corrélation inter-thèmes — 5 patterns de crise',c:'bok',d:1510},
+  {t:'[  OK  ] Déploiement air-gap disponible',c:'bok',d:1630},
+  {t:'',d:1700},
+  {t:'[ INFO ] Outreach institutionnel : PJGN · DGSI · IRSEM · FRS',c:'bok',d:1760},
+  {t:'[ INFO ] Gendarmerie Nationale — intérêt VoxReport confirmé',c:'bok',d:1880},
+  {t:'',d:1950},
+  {t:'Authentification réussie — Bienvenue, MOSS',c:'bok',d:2010},
+  {t:'Chargement interface CASSANDRE TERMINAL...',c:'',d:2160},
 ];
+const blc=document.getElementById('bl');
+let maxD=0;
+BOOT.forEach(({t,c,d})=>{
+  setTimeout(()=>{
+    const div=document.createElement('div');
+    div.className='bl s'+(c?' '+c:'');
+    div.textContent=t||'\u00a0';
+    blc.appendChild(div);
+    blc.scrollTop=blc.scrollHeight;
+    if(t){
+      if(c==='bok')okBeep();
+      else if(c==='bwn')warnBeep();
+      else if(c==='bcy')bootBeep();
+      else typeBeep();
+    }
+  },d);
+  if(d>maxD)maxD=d;
+});
+setTimeout(()=>{
+  staticBurst();
+  const boot=document.getElementById('boot');
+  boot.classList.add('out');
+  setTimeout(()=>{
+    boot.style.display='none';
+    const root=document.getElementById('root');
+    root.style.display='block';
+    root.style.opacity='0';
+    root.style.transition='opacity 0.5s';
+    setTimeout(()=>{root.style.opacity='1';initMain()},50);
+  },400);
+},maxD+600);
 
-// ── Moteur de typage ─────────────────────────────────────────────────────────
-let seqIdx = 0;
-let totalDelay = 0;
-
-function addLine(html, extraClass = '') {
-  const div = document.createElement('div');
-  div.className = 'line ' + extraClass;
-  div.innerHTML = html;
-  out.appendChild(div);
-  cursorLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
+/* ── MATRIX ── */
+function initMatrix(){
+  const c=document.getElementById('mc'),ctx=c.getContext('2d');
+  const rs=()=>{c.width=c.offsetWidth;c.height=c.offsetHeight};
+  rs();window.addEventListener('resize',rs);
+  const cols=Math.floor(c.width/13);
+  const drops=Array(cols).fill(1);
+  const ch='01アイウエオカキクケコナニヌネノABCDEFGHIJKLM';
+  setInterval(()=>{
+    ctx.fillStyle='rgba(1,9,1,0.055)';ctx.fillRect(0,0,c.width,c.height);
+    ctx.font='12px IBM Plex Mono';
+    drops.forEach((y,i)=>{
+      const bright=Math.random()>0.97;
+      ctx.fillStyle=bright?'#ffffff':'#00ff41';
+      ctx.fillText(ch[Math.floor(Math.random()*ch.length)],i*13,y*13);
+      if(y*13>c.height&&Math.random()>.975)drops[i]=0;
+      drops[i]++;
+    });
+  },55);
 }
 
-function typeText(element, text, speed, cb) {
-  let i = 0;
-  function tick() {
-    if (i <= text.length) {
-      element.innerHTML = text.slice(0, i);
-      i++;
-      setTimeout(tick, speed);
-    } else if (cb) cb();
-  }
-  tick();
-}
+/* ── RADAR ── */
+function initRadar(){
+  const c=document.getElementById('radar-canvas');
+  const ctx=c.getContext('2d');
+  const W=c.width,H=c.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-20;
+  let angle=0;
+  const blips=Array.from({length:8},()=>({
+    a:Math.random()*Math.PI*2,
+    r:R*(0.2+Math.random()*0.75),
+    life:0,decay:0.008+Math.random()*0.006
+  }));
 
-function processSequence() {
-  if (seqIdx >= SEQUENCE.length) return;
-  const step = SEQUENCE[seqIdx++];
+  setInterval(()=>{
+    ctx.fillStyle='rgba(1,9,1,0.18)';ctx.fillRect(0,0,W,H);
 
-  setTimeout(() => {
-    if (step.type === 'blank') {
-      addLine('');
-      processSequence();
-    }
-    else if (step.type === 'idle') {
-      // Curseur reste actif — rien à faire
-    }
-    else if (step.type === 'prompt') {
-      const div = document.createElement('div');
-      div.className = 'line';
-      const promptSpan = document.createElement('span');
-      promptSpan.className = 'prompt';
-      promptSpan.textContent = step.text;
-      const cmdSpan = document.createElement('span');
-      cmdSpan.className = 'cmd';
-      div.appendChild(promptSpan);
-      div.appendChild(cmdSpan);
-      out.appendChild(div);
-      cursorLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    // rings
+    [.25,.5,.75,1].forEach(f=>{
+      ctx.beginPath();ctx.arc(cx,cy,R*f,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(0,255,65,${f===1?.18:.07})`;ctx.lineWidth=1;ctx.stroke();
+    });
+    // crosshairs
+    ctx.strokeStyle='rgba(0,255,65,0.06)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx-R,cy);ctx.lineTo(cx+R,cy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,cy-R);ctx.lineTo(cx,cy+R);ctx.stroke();
 
-      // Typage de la commande
-      typeText(cmdSpan, step.cmd, 45, () => {
-        setTimeout(processSequence, 300);
-      });
+    // sweep
+    const sweep=ctx.createConicalGradient?null:null;
+    ctx.save();
+    ctx.translate(cx,cy);
+    for(let i=0;i<60;i++){
+      const a=angle-i*0.04;
+      const alpha=Math.max(0,(60-i)/60)*0.18;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.arc(0,0,R,a-0.04,a,false);
+      ctx.fillStyle=`rgba(0,255,65,${alpha})`;
+      ctx.fill();
     }
-    else if (step.type === 'output') {
-      let li = 0;
-      function nextLine() {
-        if (li >= step.lines.length) { processSequence(); return; }
-        const l = step.lines[li++];
-        // Ligne avec deux parties (label + valeur)
-        if (step.lines[li - 1] && typeof l.text === 'string') {
-          // Vérifier si la ligne suivante est une continuation (sans cls = fusion)
-          const next = step.lines[li];
-          if (next && !next.text.startsWith('  ') && li < step.lines.length) {
-            // ligne simple
-            addLine(`<span class="${l.cls}">${l.text}</span>`);
-          } else {
-            addLine(`<span class="${l.cls}">${l.text}</span>`);
-          }
-        }
-        setTimeout(nextLine, step.delay);
+    ctx.restore();
+
+    // sweep line
+    ctx.save();ctx.translate(cx,cy);
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(angle)*R,Math.sin(angle)*R);
+    ctx.strokeStyle='rgba(0,255,65,0.7)';ctx.lineWidth=1.5;
+    ctx.shadowColor='#00ff41';ctx.shadowBlur=8;
+    ctx.stroke();ctx.restore();
+
+    // blips
+    blips.forEach(b=>{
+      const da=angle%(Math.PI*2);
+      const ba=((b.a%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+      if(Math.abs(da-ba)<0.15||(da<0.15&&ba>Math.PI*2-0.15)){
+        b.life=1;
+        radarPing();
       }
-      nextLine();
-    }
-  }, step.type === 'prompt' ? 600 : 200);
+      if(b.life>0){
+        const bx=cx+Math.cos(b.a)*b.r,by=cy+Math.sin(b.a)*b.r;
+        ctx.beginPath();ctx.arc(bx,by,3,0,Math.PI*2);
+        ctx.fillStyle=`rgba(0,255,65,${b.life})`;
+        ctx.shadowColor='#00ff41';ctx.shadowBlur=10;
+        ctx.fill();ctx.shadowBlur=0;
+        b.life=Math.max(0,b.life-b.decay);
+      }
+    });
+
+    angle+=0.025;
+    if(angle>Math.PI*2)angle=0;
+
+    // center dot
+    ctx.beginPath();ctx.arc(cx,cy,2,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,255,65,.6)';ctx.fill();
+
+    // label
+    ctx.font='8px IBM Plex Mono';ctx.fillStyle='rgba(0,255,65,.25)';
+    ctx.fillText('SCAN',8,14);
+    ctx.fillText(new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),W-80,14);
+  },40);
 }
 
-// Ligne de boot
-setTimeout(() => {
-  addLine('<span class="dim">CASSANDRE v2.0 · INITIALISATION...</span>');
-  addLine('<span class="dim">Ollama OK · Mistral 7B chargé · SQLite OK · Serveur :3000</span>');
-  addLine('');
-  setTimeout(processSequence, 800);
-}, 500);
+/* ── SIGNAL FEED ── */
+const SIGNALS=[
+  'CASSANDRE — collecteur RSS actif [247 sources]',
+  'Mistral 7B — classification en cours...',
+  'Signal détecté — score confiance 0.87',
+  'SENTINELLE — seuil ORANGE franchi',
+  'Corrélation thèmes : DEFENSE × GEOPOLITIQUE',
+  'Source PRIMARY — fiabilité maximale',
+  'Reddit FR — 3 nouveaux signaux indexés',
+  'Pattern #4 CRISE DIPLOMATIQUE — actif',
+  'Journal opérateur — 12 entrées aujourd\'hui',
+  'Air-gap mode — aucune donnée externe',
+];
+let feedIdx=0;
+function updateFeed(){
+  const fi=document.getElementById('feed-items');
+  if(!fi)return;
+  const div=document.createElement('div');
+  div.className='feed-item';
+  const hi=Math.random()>.6;
+  if(hi)div.classList.add('feed-hi');
+  div.textContent=SIGNALS[feedIdx%SIGNALS.length];
+  feedIdx++;
+  fi.prepend(div);
+  if(fi.children.length>6)fi.removeChild(fi.lastChild);
+  beep(600,0.03,0.02,'sine');
+}
+
+/* ── TYPEWRITER ── */
+function typeW(el,text,speed,cb){
+  let i=0;
+  const t=setInterval(()=>{
+    el.textContent=text.slice(0,i+1);
+    typeBeep();i++;
+    if(i>=text.length){clearInterval(t);if(cb)cb()}
+  },speed);
+}
+
+/* ── TICKER ── */
+function initTicker(){
+  const items=[
+    {t:'CASSANDRE — OSINT platform active',h:true},
+    {t:'Signal COVID-19 détecté J-21 avant alerte officielle',h:true},
+    {t:'VoxReport — Gendarmerie Nationale — intérêt confirmé'},
+    {t:'Mistral 7B // Ollama // CPU-only // Souveraineté des données'},
+    {t:'Stage disponible Août 2026 — Lot-et-Garonne'},
+    {t:'Outreach actif : PJGN · DGSI · IRSEM · FRS',h:true},
+    {t:'Architecture air-gap // Zéro dépendance cloud'},
+    {t:'Parcours : 13e RDP · Logistique · Direction d\'agence'},
+    {t:'Analyses géopolitiques publiées — Substack · Presse FR',h:true},
+    {t:'github.com/MossCDA // mosscda.github.io'},
+  ];
+  const tc=document.getElementById('tic');
+  const all=[...items,...items];
+  tc.innerHTML=all.map(i=>`<span class="tit${i.h?' h':''}">${i.t}</span><span class="tit" style="color:rgba(0,255,65,.08);padding:0 8px">◆</span>`).join('');
+}
+
+/* ── SCROLL ── */
+function initScroll(){
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('v')}),{threshold:.08});
+  document.querySelectorAll('.fi').forEach(el=>obs.observe(el));
+  const sk=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting)e.target.querySelectorAll('.sk-f').forEach(b=>{b.style.width=b.dataset.w+'%'});
+  }),{threshold:.2});
+  document.querySelectorAll('.sk-grid>div').forEach(el=>sk.observe(el));
+}
+
+/* ── HOVER SOUNDS ── */
+function initHover(){
+  document.querySelectorAll('a,.proj-card,.ic,.ct-a').forEach(el=>{
+    el.addEventListener('mouseenter',()=>beep(800,0.06,0.025,'square'));
+  });
+}
+
+/* ── FINALE RADAR (O du logo) ── */
+function initFinaleRadar(){
+  const c=document.getElementById('finale-radar');
+  if(!c)return;
+  // mesure la hauteur réelle d'une lettre pour aligner le radar
+  const ref=document.querySelector('#ml-m span');
+  const sz=ref?ref.getBoundingClientRect().height:Math.min(window.innerWidth*0.16,200);
+  const s=Math.round(sz);
+  c.width=s;c.height=s;
+  const ctx=c.getContext('2d');
+  const cx=s/2,cy=s/2,R=s/2-3;
+  let angle=0;
+  const blips=Array.from({length:5},()=>({
+    a:Math.random()*Math.PI*2,
+    r:R*(0.2+Math.random()*0.7),
+    life:0,decay:0.007+Math.random()*0.005
+  }));
+  setInterval(()=>{
+    ctx.fillStyle='#021a06';ctx.fillRect(0,0,s,s);
+    // rings
+    [.33,.66,1].forEach(f=>{
+      ctx.beginPath();ctx.arc(cx,cy,R*f,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(0,255,65,${f===1?.5:.15})`;ctx.lineWidth=f===1?1.5:0.8;ctx.stroke();
+    });
+    // cross
+    ctx.strokeStyle='rgba(0,255,65,0.1)';ctx.lineWidth=0.8;
+    ctx.beginPath();ctx.moveTo(cx-R,cy);ctx.lineTo(cx+R,cy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,cy-R);ctx.lineTo(cx,cy+R);ctx.stroke();
+    // sweep trail
+    ctx.save();ctx.translate(cx,cy);
+    for(let i=0;i<50;i++){
+      const a=angle-i*0.05,al=Math.max(0,(50-i)/50)*0.12;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,a-0.05,a,false);
+      ctx.fillStyle=`rgba(0,255,65,${al})`;ctx.fill();
+    }
+    ctx.restore();
+    // sweep line
+    ctx.save();ctx.translate(cx,cy);
+    ctx.beginPath();ctx.moveTo(0,0);
+    ctx.lineTo(Math.cos(angle)*R,Math.sin(angle)*R);
+    ctx.strokeStyle='rgba(0,255,65,0.8)';ctx.lineWidth=1.5;
+    ctx.shadowColor='#00ff41';ctx.shadowBlur=8;
+    ctx.stroke();ctx.restore();
+    // blips
+    blips.forEach(b=>{
+      const da=angle%(Math.PI*2),ba=((b.a%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+      if(Math.abs(da-ba)<0.18)b.life=1;
+      if(b.life>0){
+        ctx.beginPath();ctx.arc(cx+Math.cos(b.a)*b.r,cy+Math.sin(b.a)*b.r,Math.max(2,s*0.015),0,Math.PI*2);
+        ctx.fillStyle=`rgba(0,255,65,${b.life})`;
+        ctx.shadowColor='#00ff41';ctx.shadowBlur=6;
+        ctx.fill();ctx.shadowBlur=0;
+        b.life=Math.max(0,b.life-b.decay);
+      }
+    });
+    angle+=0.025;if(angle>Math.PI*2)angle=0;
+    // center dot
+    ctx.beginPath();ctx.arc(cx,cy,2,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,255,65,0.7)';ctx.fill();
+  },40);
+}
+
+/* ── FINALE TRIGGER — scroll sentinel ── */
+function initFinaleTrigger(){
+  const sentinel=document.createElement('div');
+  sentinel.style.cssText='position:absolute;bottom:0;left:0;height:1px;width:1px;';
+  document.getElementById('root').style.position='relative';
+  document.getElementById('root').appendChild(sentinel);
+
+  let shown=false;
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting&&!shown){
+        shown=true;
+        showFinale();
+      }
+    });
+  },{threshold:1.0});
+  obs.observe(sentinel);
+
+  // also ESC key
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeFinale()});
+}
+
+function showFinale(){
+  initFinaleRadar();
+  const f=document.getElementById('finale');
+  f.style.opacity='1';f.style.pointerEvents='auto';
+  // reveal letters
+  ['ml-m','ml-o','ml-s1','ml-s2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.opacity='1';el.style.transform='translateY(0)'}
+  });
+  document.getElementById('finale-tag').style.opacity='1';
+  document.getElementById('finale-sub').style.opacity='1';
+  document.getElementById('finale-close').style.opacity='1';
+  beep(440,0.3,0.04,'sine');
+  setTimeout(()=>beep(660,0.4,0.03,'sine'),300);
+  setTimeout(()=>beep(880,0.5,0.02,'sine'),600);
+}
+
+function closeFinale(){
+  const f=document.getElementById('finale');
+  f.style.opacity='0';f.style.pointerEvents='none';
+}
+
+/* ── MAIN ── */
+function initMain(){
+  initMatrix();
+  initRadar();
+  initTicker();
+  initScroll();
+  initHover();
+  initFinaleTrigger();
+  typeW(document.getElementById('tc'),'OSINT · Signaux faibles · Renseignement · Défense',38);
+  updateFeed();
+  setInterval(updateFeed,3500);
+}
 </script>
 </body>
 </html>
